@@ -15,9 +15,9 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_DB: project-sem-1
-          POSTGRES_USER: validator
-          POSTGRES_PASSWORD: val1dat0r
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         ports:
           - 5432:5432
         # Добавляем volume для сохранения данных
@@ -30,76 +30,60 @@ jobs:
           --health-retries 5
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.23'
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
 
-    - name: Make scripts executable
-      run: |
-        chmod +x scripts/prepare.sh
-        chmod +x scripts/run.sh
-        chmod +x scripts/tests.sh
+      - name: Make scripts executable
+        run: |
+          chmod +x scripts/prepare.sh
+          chmod +x scripts/run.sh
+          chmod +x scripts/tests.sh
 
-    - name: Debug environment variables
-      run: env
+      - name: Prepare environment
+        run: ./scripts/prepare.sh
 
-    - name: Prepare environment
-      run: ./scripts/prepare.sh
+      - name: Create .env file
+        run: |
+          echo "SERVER_PORT=${{ secrets.SERVER_PORT }}" >> .env
+          echo "SERVER_READ_TIMEOUT=${{ secrets.SERVER_READ_TIMEOUT }}" >> .env
+          echo "SERVER_WRITE_TIMEOUT=${{ secrets.SERVER_WRITE_TIMEOUT }}" >> .env
+          echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}" >> .env
+          echo "POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}" >> .env
+          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
+          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
+          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env  
 
-    - name: Run application
-      run: ./scripts/run.sh
-      env:
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
-        POSTGRES_DB: project-sem-1
-        POSTGRES_USER: validator
-        POSTGRES_PASSWORD: val1dat0r
+      - name: Run application
+        run: ./scripts/run.sh
 
-    - name: Test Level 1
-      id: test-level-1
-      continue-on-error: true
-      run: ./scripts/tests.sh 1
-      env:
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
-        POSTGRES_DB: project-sem-1
-        POSTGRES_USER: validator
-        POSTGRES_PASSWORD: val1dat0r
+      - name: Test Level 1
+        id: test-level-1
+        continue-on-error: true
+        run: ./scripts/tests.sh 1
 
-    - name: Test Level 2
-      id: test-level-2
-      continue-on-error: true
-      run: ./scripts/tests.sh 2
-      env:
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
-        POSTGRES_DB: project-sem-1
-        POSTGRES_USER: validator
-        POSTGRES_PASSWORD: val1dat0r
+      - name: Test Level 2
+        id: test-level-2
+        continue-on-error: true
+        run: ./scripts/tests.sh 2
 
-    - name: Test Level 3
-      id: test-level-3
-      continue-on-error: true
-      run: ./scripts/tests.sh 3
-      env:
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
-        POSTGRES_DB: project-sem-1
-        POSTGRES_USER: validator
-        POSTGRES_PASSWORD: val1dat0r
+      - name: Test Level 3
+        id: test-level-3
+        continue-on-error: true
+        run: ./scripts/tests.sh 3
 
-    - name: Check test results
-      if: always()
-      run: |
-        if [[ "${{ steps.test-level-1.outcome }}" == "success" ]] || \
-           [[ "${{ steps.test-level-2.outcome }}" == "success" ]] || \
-           [[ "${{ steps.test-level-3.outcome }}" == "success" ]]; then
-          echo "At least one test level passed successfully!"
-          exit 0
-        else
-          echo "All test levels failed!"
-          exit 1
-        fi
+      - name: Check test results
+        if: always()
+        run: |
+          if [[ "${{ steps.test-level-1.outcome }}" == "success" ]] || \
+             [[ "${{ steps.test-level-2.outcome }}" == "success" ]] || \
+             [[ "${{ steps.test-level-3.outcome }}" == "success" ]]; then
+            echo "At least one test level passed successfully!"
+            exit 0
+          else
+            echo "All test levels failed!"
+            exit 1
+          fi
