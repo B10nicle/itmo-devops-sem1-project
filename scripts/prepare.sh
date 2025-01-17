@@ -24,8 +24,6 @@ run_command "psql -h localhost -p 5432 -U validator -d project-sem-1 -f migratio
             "Failed to create table prices" \
             "Table prices has been successfully created"
 
-echo ""
-
 echo -e "${YELLOW}Compiling application${NC}"
 run_command "go build -o $COMPILE_TO $COMPILE_FROM" \
             "Failed to compile the application" \

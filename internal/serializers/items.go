@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func SerializePrices(prices []database.Price) (*bytes.Buffer, error) {
+func SerializeItems(items []database.Item) (*bytes.Buffer, error) {
 	var buffer bytes.Buffer
 	csvWriter := csv.NewWriter(&buffer)
 	defer csvWriter.Flush()
@@ -20,7 +20,7 @@ func SerializePrices(prices []database.Price) (*bytes.Buffer, error) {
 		return nil, fmt.Errorf("failed to write header: %w", err)
 	}
 
-	for _, price := range prices {
+	for _, price := range items {
 		record := []string{
 			fmt.Sprintf("%d", price.ID),
 			price.Name,
@@ -36,8 +36,8 @@ func SerializePrices(prices []database.Price) (*bytes.Buffer, error) {
 	return &buffer, nil
 }
 
-func DeserializePrices(r io.Reader) ([]database.Price, []error) {
-	var prices []database.Price
+func DeserializeItems(r io.Reader) ([]database.Item, []error) {
+	var items []database.Item
 	var errors []error
 
 	csvReader := csv.NewReader(r)
@@ -58,49 +58,49 @@ func DeserializePrices(r io.Reader) ([]database.Price, []error) {
 			continue
 		}
 
-		price, err := validatePrice(record)
+		item, err := validateItem(record)
 		if err != nil {
 			errors = append(errors, fmt.Errorf("invalid record %v: %w", record, err))
 			continue
 		}
 
-		prices = append(prices, price)
+		items = append(items, item)
 	}
 
-	return prices, errors
+	return items, errors
 }
 
-func validatePrice(record []string) (database.Price, error) {
+func validateItem(record []string) (database.Item, error) {
 	if len(record) != 5 {
-		return database.Price{}, errors.New("invalid number of fields in record")
+		return database.Item{}, errors.New("invalid number of fields in record")
 	}
 
 	id, err := strconv.Atoi(record[0])
 	if err != nil {
-		return database.Price{}, fmt.Errorf("invalid ID: %w", err)
+		return database.Item{}, fmt.Errorf("invalid ID: %w", err)
 	}
 
 	name := record[1]
 	if name == "" {
-		return database.Price{}, errors.New("name cannot be empty")
+		return database.Item{}, errors.New("name cannot be empty")
 	}
 
 	category := record[2]
 	if category == "" {
-		return database.Price{}, errors.New("category cannot be empty")
+		return database.Item{}, errors.New("category cannot be empty")
 	}
 
 	price, err := strconv.ParseFloat(record[3], 64)
 	if err != nil {
-		return database.Price{}, fmt.Errorf("invalid price: %w", err)
+		return database.Item{}, fmt.Errorf("invalid price: %w", err)
 	}
 
 	createDate, err := time.Parse("2006-01-02", record[4])
 	if err != nil {
-		return database.Price{}, fmt.Errorf("invalid create date: %w", err)
+		return database.Item{}, fmt.Errorf("invalid create date: %w", err)
 	}
 
-	return database.Price{
+	return database.Item{
 		ID:         id,
 		Name:       name,
 		Category:   category,

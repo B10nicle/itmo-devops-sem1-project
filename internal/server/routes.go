@@ -3,18 +3,18 @@ package server
 import (
 	"net/http"
 	"project_sem/internal/database"
-	"project_sem/internal/services"
+	"project_sem/internal/resource"
 )
 
-func NewServerRouter(repo *database.Repository) *http.ServeMux {
+func NewServerRouter(repository *database.Repository) *http.ServeMux {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/v0/prices", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			services.GetPrice(repo)(w, r)
+			resource.GetItem(repository)(w, r)
 		case http.MethodPost:
-			services.CreatePrice(repo)(w, r)
+			resource.CreateItem(repository)(w, r)
 		default:
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		}

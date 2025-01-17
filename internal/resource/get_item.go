@@ -1,4 +1,4 @@
-package services
+package resource
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func GetPrice(repo *database.Repository) http.HandlerFunc {
+func GetItem(repo *database.Repository) http.HandlerFunc {
 	const errorResponseBody = "Failed to load prices"
 	const successContentType = "application/zip"
 	const successContentDisposition = "attachment; filename=data.zip"
@@ -26,14 +26,14 @@ func GetPrice(repo *database.Repository) http.HandlerFunc {
 			return
 		}
 
-		prices, err := repo.GetPrices(params)
+		prices, err := repo.GetItems(params)
 		if err != nil {
 			log.Printf("Failed to fetch prices: %v\n", err)
 			http.Error(w, errorResponseBody, http.StatusInternalServerError)
 			return
 		}
 
-		serializedPrices, err := serializers.SerializePrices(prices)
+		serializedPrices, err := serializers.SerializeItems(prices)
 		if err != nil {
 			log.Printf("Failed to serialize prices: %v\n", err)
 			http.Error(w, errorResponseBody, http.StatusInternalServerError)

@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type Price struct {
+type Item struct {
 	ID         int
 	Name       string
 	Category   string
@@ -21,18 +21,18 @@ type FilterParams struct {
 	MaxCreateDate time.Time
 }
 
-func (r *Repository) CreatePrice(price Price) error {
+func (r *Repository) CreateItem(item Item) error {
 	query := `
 		INSERT INTO prices (id, name, category, price, create_date) 
 		VALUES ($1, $2, $3, $4, $5)`
-	_, err := r.db.Exec(query, price.ID, price.Name, price.Category, price.Price, price.CreateDate)
+	_, err := r.db.Exec(query, item.ID, item.Name, item.Category, item.Price, item.CreateDate)
 	if err != nil {
 		return fmt.Errorf("failed to create price: %w", err)
 	}
 	return nil
 }
 
-func (r *Repository) GetPrices(params FilterParams) ([]Price, error) {
+func (r *Repository) GetItems(params FilterParams) ([]Item, error) {
 	query := `
 		SELECT id, name, category, price, create_date 
 		FROM prices 
@@ -49,9 +49,9 @@ func (r *Repository) GetPrices(params FilterParams) ([]Price, error) {
 		}
 	}(rows)
 
-	prices := make([]Price, 0)
+	prices := make([]Item, 0)
 	for rows.Next() {
-		var price Price
+		var price Item
 		err = rows.Scan(&price.ID, &price.Name, &price.Category, &price.Price, &price.CreateDate)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan price row: %w", err)

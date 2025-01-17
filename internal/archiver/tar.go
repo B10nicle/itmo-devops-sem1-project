@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 )
 
-func ExtractFromTar(tarStream io.Reader) (io.ReadCloser, error) {
+func ExtractTar(tarStream io.Reader) (io.ReadCloser, error) {
 	data, err := io.ReadAll(tarStream)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read input stream: %w", err)

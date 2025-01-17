@@ -1,8 +1,7 @@
-package services
+package resource
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"log"
 	"mime/multipart"
@@ -20,7 +19,7 @@ type PriceStats struct {
 	TotalPrice      int `json:"total_price"`
 }
 
-func CreatePrice(repo *database.Repository) http.HandlerFunc {
+func CreateItem(repo *database.Repository) http.HandlerFunc {
 	const errorResponseBody = "failed to upload prices"
 	const successContentType = "application/json"
 
@@ -39,7 +38,7 @@ func CreatePrice(repo *database.Repository) http.HandlerFunc {
 		}(file)
 
 		formatType := r.URL.Query().Get("type")
-		rc, err := extractFile(file, formatType)
+		rc, err := archiver.ExtractFile(file, formatType)
 		if err != nil {
 			log.Printf("failed to unarchive incoming file: %v\n", err)
 			http.Error(w, errorResponseBody, http.StatusInternalServerError)
@@ -52,8 +51,7 @@ func CreatePrice(repo *database.Repository) http.HandlerFunc {
 			}
 		}(rc)
 
-		// Deserialize prices
-		prices, deserializationErrors := serializers.DeserializePrices(rc)
+		prices, deserializationErrors := serializers.DeserializeItems(rc)
 		totalCount := len(prices) + len(deserializationErrors)
 
 		if len(deserializationErrors) > 0 {
@@ -65,7 +63,7 @@ func CreatePrice(repo *database.Repository) http.HandlerFunc {
 		}
 
 		for _, price := range prices {
-			err = repo.CreatePrice(price)
+			err = repo.CreateItem(price)
 			if err != nil {
 				stats.DuplicateCount++
 			} else {
@@ -88,16 +86,5 @@ func CreatePrice(repo *database.Repository) http.HandlerFunc {
 			log.Printf("failed to encode response: %v\n", err)
 			http.Error(w, "failed to encode response", http.StatusInternalServerError)
 		}
-	}
-}
-
-func extractFile(r io.Reader, fileType string) (io.ReadCloser, error) {
-	switch fileType {
-	case "zip":
-		return archiver.ExtractFromZip(r)
-	case "tar":
-		return archiver.ExtractFromTar(r)
-	default:
-		return nil, errors.New("unsupported archiver type")
 	}
 }

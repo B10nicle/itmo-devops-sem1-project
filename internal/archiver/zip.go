@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 )
 
-func ExtractFromZip(zipStream io.Reader) (io.ReadCloser, error) {
+func ExtractZip(zipStream io.Reader) (io.ReadCloser, error) {
 	data, err := io.ReadAll(zipStream)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read zip stream: %w", err)
