@@ -43,6 +43,9 @@ jobs:
         chmod +x scripts/run.sh
         chmod +x scripts/tests.sh
 
+    - name: Debug environment variables
+      run: env
+
     - name: Prepare environment
       run: ./scripts/prepare.sh
 
