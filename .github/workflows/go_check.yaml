@@ -11,6 +11,8 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
 
+    environment: Database
+
     services:
       postgres:
         image: postgres:15
@@ -48,9 +50,9 @@ jobs:
 
       - name: Create .env file
         run: |
-          echo "SERVER_PORT=${{ secrets.SERVER_PORT }}" >> .env
-          echo "SERVER_READ_TIMEOUT=${{ secrets.SERVER_READ_TIMEOUT }}" >> .env
-          echo "SERVER_WRITE_TIMEOUT=${{ secrets.SERVER_WRITE_TIMEOUT }}" >> .env
+          echo "SERVER_PORT=${{ vars.SERVER_PORT }}" >> .env
+          echo "SERVER_READ_TIMEOUT=${{ vars.SERVER_READ_TIMEOUT }}" >> .env
+          echo "SERVER_WRITE_TIMEOUT=${{ vars.SERVER_WRITE_TIMEOUT }}" >> .env
           echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}" >> .env
           echo "POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}" >> .env
           echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
