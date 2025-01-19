@@ -19,7 +19,7 @@ type PriceStats struct {
 	TotalPrice      int `json:"total_price"`
 }
 
-func CreateItem(repo *database.Repository) http.HandlerFunc {
+func CreateItem(repository *database.Repository) http.HandlerFunc {
 	const errorResponseBody = "failed to upload prices"
 	const successContentType = "application/json"
 
@@ -62,16 +62,37 @@ func CreateItem(repo *database.Repository) http.HandlerFunc {
 			TotalCount: totalCount,
 		}
 
+		tx, err := repository.BeginTransaction()
+		if err != nil {
+			log.Printf("failed to start transaction: %v\n", err)
+			http.Error(w, errorResponseBody, http.StatusInternalServerError)
+			return
+		}
+
 		for _, price := range prices {
-			err = repo.CreateItem(price)
+			err = repository.CreateItem(tx, price)
 			if err != nil {
-				stats.DuplicateCount++
+				if database.IsDuplicateError(err) {
+					stats.DuplicateCount++
+				} else {
+					log.Printf("failed to insert price: %v\n", err)
+					_ = tx.Rollback()
+					http.Error(w, errorResponseBody, http.StatusInternalServerError)
+					return
+				}
 			} else {
 				stats.TotalItems++
 			}
 		}
 
-		totalPrice, totalCategories, err := repo.GetUniqueCategoriesAndTotalPrice()
+		err = tx.Commit()
+		if err != nil {
+			log.Printf("failed to commit transaction: %v\n", err)
+			http.Error(w, errorResponseBody, http.StatusInternalServerError)
+			return
+		}
+
+		totalPrice, totalCategories, err := repository.GetUniqueCategoriesAndTotalPrice()
 		if err != nil {
 			log.Printf("failed to get total price and unique categories: %v\n", err)
 			http.Error(w, errorResponseBody, http.StatusInternalServerError)

@@ -2,7 +2,9 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 	"log"
 	"project_sem/internal/config"
@@ -36,6 +38,18 @@ func NewRepository(cfg config.DB) (*Repository, error) {
 
 	log.Printf("Successfully connected to database '%s'", cfg.Name)
 	return &Repository{db: db}, nil
+}
+
+func (r *Repository) BeginTransaction() (*sql.Tx, error) {
+	return r.db.Begin()
+}
+
+func IsDuplicateError(err error) bool {
+	var pgErr *pq.Error
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "23505"
+	}
+	return false
 }
 
 func (r *Repository) Close() {

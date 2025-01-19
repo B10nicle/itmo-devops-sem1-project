@@ -16,16 +16,17 @@ import (
 
 type App struct {
 	server          *http.Server
+	repository      *database.Repository
 	shutdownTimeout time.Duration
 }
 
 func New(cfg config.Config) (*App, error) {
-	repo, err := database.NewRepository(cfg.DB)
+	repository, err := database.NewRepository(cfg.DB)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create repository: %w", err)
 	}
 
-	router := NewServerRouter(repo)
+	router := NewServerRouter(repository)
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
 		Handler:      router,
@@ -35,6 +36,7 @@ func New(cfg config.Config) (*App, error) {
 
 	return &App{
 		server:          server,
+		repository:      repository,
 		shutdownTimeout: 5 * time.Second,
 	}, nil
 }
@@ -59,5 +61,10 @@ func (app *App) Run() {
 		log.Printf("Error during server shutdown: %s", err)
 	} else {
 		log.Println("Server shutdown completed successfully.")
+	}
+
+	if app.repository != nil {
+		app.repository.Close()
+		log.Println("Repository closed successfully.")
 	}
 }

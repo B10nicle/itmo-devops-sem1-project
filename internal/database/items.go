@@ -21,11 +21,11 @@ type FilterParams struct {
 	MaxCreateDate time.Time
 }
 
-func (r *Repository) CreateItem(item Item) error {
+func (r *Repository) CreateItem(tx *sql.Tx, item Item) error {
 	query := `
-		INSERT INTO prices (id, name, category, price, create_date) 
-		VALUES ($1, $2, $3, $4, $5)`
-	_, err := r.db.Exec(query, item.ID, item.Name, item.Category, item.Price, item.CreateDate)
+		INSERT INTO prices (name, category, price, create_date) 
+		VALUES ($1, $2, $3, $4)`
+	_, err := tx.Exec(query, item.Name, item.Category, item.Price, item.CreateDate)
 	if err != nil {
 		return fmt.Errorf("failed to create price: %w", err)
 	}
